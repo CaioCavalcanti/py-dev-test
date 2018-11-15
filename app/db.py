@@ -25,7 +25,7 @@ def delete(filter):
 def get_many(filter):
     collection = get_collection()
 
-    return collection.find(filter)
+    return collection.find(filter, { '_id': False})
 
 def get_one(filter):
     collection = get_collection()

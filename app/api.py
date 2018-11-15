@@ -15,18 +15,15 @@ if __name__ == '__main__':
 
 @app.route('/api/modalidade/<modalidade_id>/alunos', methods=['GET'])
 def retornar_alunos_por_modalidade(modalidade_id):
-    validacao_datas = valida_datas(request)
-    
-    if validacao_datas is not None:
-        return bad_request(validacao_datas)
+    periodo_informado = valida_datas(request)
 
-    resultado = alunos.get_many({""})
-    # params modalidade, data de inicio e data de fim
-    # retorno lista de todos os itens no período selecionado
-    # ordenado de forma decrescente
-    # validar modalidade
+    if 'error' in periodo_informado:
+        return bad_request(periodo_informado['error'])
 
-    return jsonify(modalidade_id)
+    result = alunos.get_many({ "modalidade": modalidade_id, "data_inicio": { "$gte": periodo_informado['start_date'], "$lte": periodo_informado['end_date'] } })
+    sorted_result = sorted(result, key=lambda k: k['data_inicio'], reverse=True)
+
+    return jsonify(sorted_result)
 
 @app.route('/api/campus/<campus_id>/cursos', methods=['GET'])
 def retornar_cursos_por_campus(campus_id):
