@@ -41,3 +41,8 @@ def distinct(field, filter):
     collection = get_collection()
 
     return collection.distinct(field, filter)
+
+def insert(document):
+    collection = get_collection()
+
+    return collection.insert_one(document)

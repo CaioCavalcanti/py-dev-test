@@ -1,5 +1,6 @@
 from datetime import datetime
 from flask import Flask, request, jsonify, make_response
+from jsonschema import validate
 from uuid import uuid4
 
 # Local
@@ -45,13 +46,21 @@ def retornar_alunos_por_campus(campus_id):
 
 @app.route('/api/alunos', methods=['POST'])
 def cadastrar_aluno():
-    # Paylod: nome, idade_ate_31_12_2016, ra, campus,municipio, curso
-    # modalidade, nivel_do_curso, data_inicio
-    # retorno 201 com o mesmo payload
-    # validar duplicados
-    print(request.get_json())
+    payload = request.get_json()
+    validate(payload, alunos.schema)
 
-    return jsonify(str(request.data)), 201
+    # Força data_inicio como data
+    payload['data_inicio'] = datetime.strptime(payload['data_inicio'], '%Y-%m-%d')
+
+    if alunos.get_one(payload) is not None:
+        return bad_request("Aluno já cadastrado")
+
+    alunos.insert(payload)
+
+    # ignoring _id from Mongo, which can't be parsed
+    del payload['_id']
+
+    return jsonify(payload), 201
 
 @app.route('/api/campus/<campus_id>/alunos/<ra>', methods=['DELETE'])
 def remover_aluno(campus_id, ra):
@@ -105,8 +114,8 @@ def valida_datas(request):
         validacao_datas['error'] = "Período não informado"
         return validacao_datas
     
-    validacao_datas['start_date'] = datetime.strptime(start_date_str, '%d/%m/%Y')
-    validacao_datas['end_date'] = datetime.strptime(end_date_str, '%d/%m/%Y')
+    validacao_datas['start_date'] = datetime.strptime(start_date_str, '%Y-%m-%d')
+    validacao_datas['end_date'] = datetime.strptime(end_date_str, '%Y-%m-%d')
 
     if validacao_datas['end_date'] < validacao_datas['start_date']:
         validacao_datas['error'] = "O período informado não é válido"

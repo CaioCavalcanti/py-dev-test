@@ -9,6 +9,7 @@ setup(
     install_requires=[
         'Flask>=1.0.2',
         'pymongo',
+        'jsonschema',
         'connexion'
     ]
 )
