@@ -15,6 +15,12 @@ if __name__ == '__main__':
 
 @app.route('/api/modalidade/<modalidade_id>/alunos', methods=['GET'])
 def retornar_alunos_por_modalidade(modalidade_id):
+    validacao_datas = valida_datas(request)
+    
+    if validacao_datas is not None:
+        return bad_request(validacao_datas)
+
+    resultado = alunos.get_many({""})
     # params modalidade, data de inicio e data de fim
     # retorno lista de todos os itens no período selecionado
     # ordenado de forma decrescente
@@ -31,19 +37,12 @@ def retornar_cursos_por_campus(campus_id):
 
 @app.route('/api/campus/<campus_id>/alunos', methods=['GET'])
 def retornar_alunos_por_campus(campus_id):
-    start_date_str = request.args.get('de')
-    end_date_str = request.args.get('ate')
+    periodo_informado = valida_datas(request)
 
-    if(start_date_str is None or end_date_str is None):
-        return bad_request("Período não informado")
-    
-    start_date = datetime.strptime(start_date_str, '%d/%m/%Y')
-    end_date = datetime.strptime(end_date_str, '%d/%m/%Y')
+    if 'error' in periodo_informado:
+        return bad_request(periodo_informado['error'])
 
-    if end_date < start_date:
-        return bad_request("O período selecionado não é válido")
-
-    total_alunos = alunos.count({ "campus": campus_id, "data_inicio": { "$gte": start_date, "$lte": end_date } })
+    total_alunos = alunos.count({ "campus": campus_id, "data_inicio": { "$gte": periodo_informado['start_date'], "$lte": periodo_informado['end_date'] } })
 
     return jsonify(total_alunos)
 
@@ -98,3 +97,21 @@ def not_found(message):
     res['message'] = message
 
     return jsonify(res), 404
+
+def valida_datas(request):
+    validacao_datas = {}
+
+    start_date_str = request.args.get('de')
+    end_date_str = request.args.get('ate')
+
+    if(start_date_str is None or end_date_str is None):
+        validacao_datas['error'] = "Período não informado"
+        return validacao_datas
+    
+    validacao_datas['start_date'] = datetime.strptime(start_date_str, '%d/%m/%Y')
+    validacao_datas['end_date'] = datetime.strptime(end_date_str, '%d/%m/%Y')
+
+    if validacao_datas['end_date'] < validacao_datas['start_date']:
+        validacao_datas['error'] = "O período informado não é válido"
+    
+    return validacao_datas
