@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Flask, request, jsonify, make_response
 from uuid import uuid4
 
@@ -29,17 +30,21 @@ def retornar_cursos_por_campus(campus_id):
 
 @app.route('/api/campus/<campus_id>/alunos', methods=['GET'])
 def retornar_alunos_por_campus(campus_id):
-    # param campus, data inicio e data fim
-    # retornar número de alunos no campus no periodo selecionado
-    # tratar campus não encontrado
-    # tratar período inválido
+    start_date_str = request.args.get('de')
+    end_date_str = request.args.get('ate')
 
-    # O enunciado não deixa explícito se deveria ser uma Restful API ou não
-    # então parti do princípio que /count é válido nesse contexto. Mas
-    # para ser restful este endpoint deveria tratar apenas da lista de alunos,
-    # onde o total pode ser retornado em um header (ex: X-Total-Count).
+    if(start_date_str is None or end_date_str is None):
+        return bad_request("Período não informado")
+    
+    start_date = datetime.strptime(start_date_str, '%d/%m/%Y')
+    end_date = datetime.strptime(end_date_str, '%d/%m/%Y')
 
-    return jsonify(campus_id)
+    if end_date < start_date:
+        return bad_request("O período selecionado não é válido")
+
+    total_alunos = campus.count_alunos(campus_id, start_date, end_date)
+
+    return jsonify(total_alunos)
 
 @app.route('/api/alunos', methods=['POST'])
 def cadastrar_aluno():
@@ -70,3 +75,10 @@ def tratar_internal_server_error(e):
     res['id'] = str(erro_id)
 
     return jsonify(res), 500
+
+def bad_request(message):
+    res = dict()
+
+    res['message'] = message
+
+    return jsonify(res), 400
