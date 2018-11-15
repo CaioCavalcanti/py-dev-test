@@ -4,6 +4,7 @@ from uuid import uuid4
 
 # Local
 from . import campus
+from . import alunos
 
 app = Flask(__name__)
 
@@ -58,23 +59,31 @@ def cadastrar_aluno():
 
 @app.route('/api/campus/<campus_id>/alunos/<ra>', methods=['DELETE'])
 def remover_aluno(campus_id, ra):
-    # params campus e RA
-    # retorno 200
+    aluno = campus.get_aluno(campus_id, int(ra))
+
+    if aluno is None:
+        return not_found("Não foi possível encontrar o aluno com RA '%s' no campus '%s'" % (ra, campus_id))
+
+    alunos.delete_aluno(aluno)
 
     return make_response()
 
 @app.errorhandler(500)
 def tratar_internal_server_error(e):
+    return internal_server_error(e)
+
+def internal_server_error(error):
     erro_id = uuid4()
     # TODO: logar erro usando id como referencia
 
     res = dict()
-    message = "Ocorreu um erro ao processar sua request" if app.debug else str(e)
+    message = "Ocorreu um erro ao processar sua request" if app.debug else str(error)
 
     res['message'] = message
     res['id'] = str(erro_id)
 
     return jsonify(res), 500
+
 
 def bad_request(message):
     res = dict()
@@ -82,3 +91,10 @@ def bad_request(message):
     res['message'] = message
 
     return jsonify(res), 400
+
+def not_found(message):
+    res = dict()
+
+    res['message'] = message
+
+    return jsonify(res), 404
