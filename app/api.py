@@ -1,6 +1,9 @@
 from flask import Flask, request, jsonify, make_response
 from uuid import uuid4
 
+# Local
+from . import campus
+
 app = Flask(__name__)
 
 # TODO: load env variables
@@ -19,11 +22,10 @@ def retornar_alunos_por_modalidade(modalidade_id):
 
 @app.route('/api/campus/<campus_id>/cursos', methods=['GET'])
 def retornar_cursos_por_campus(campus_id):
-    # param campus
-    # retorna lista de cursos do campus
-    # tratar campus não encontrado
+    cursos = campus.get_cursos(campus_id)
+    cursos.sort()
 
-    return jsonify(campus_id)
+    return jsonify(cursos)
 
 @app.route('/api/campus/<campus_id>/alunos', methods=['GET'])
 def retornar_alunos_por_campus(campus_id):
