@@ -24,7 +24,7 @@ def retornar_alunos_por_modalidade(modalidade_id):
 
 @app.route('/api/campus/<campus_id>/cursos', methods=['GET'])
 def retornar_cursos_por_campus(campus_id):
-    cursos = campus.get_cursos(campus_id)
+    cursos = campus.cursos(campus_id)
     cursos.sort()
 
     return jsonify(cursos)
@@ -43,7 +43,7 @@ def retornar_alunos_por_campus(campus_id):
     if end_date < start_date:
         return bad_request("O período selecionado não é válido")
 
-    total_alunos = campus.count_alunos(campus_id, start_date, end_date)
+    total_alunos = alunos.count({ "campus": campus_id, "data_inicio": { "$gte": start_date, "$lte": end_date } })
 
     return jsonify(total_alunos)
 
@@ -59,12 +59,12 @@ def cadastrar_aluno():
 
 @app.route('/api/campus/<campus_id>/alunos/<ra>', methods=['DELETE'])
 def remover_aluno(campus_id, ra):
-    aluno = campus.get_aluno(campus_id, int(ra))
+    aluno = alunos.get_one({ "campus": campus_id, "ra": int(ra) })
 
     if aluno is None:
         return not_found("Não foi possível encontrar o aluno com RA '%s' no campus '%s'" % (ra, campus_id))
 
-    alunos.delete_aluno(aluno)
+    alunos.delete(aluno)
 
     return make_response()
 

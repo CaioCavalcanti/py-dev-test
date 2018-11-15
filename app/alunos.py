@@ -1,6 +1,13 @@
-from .db import get_estudantes_collection
+from . import db
 
-def delete_aluno(aluno):
-    collection = get_estudantes_collection()
+def delete(aluno):
+    db.delete({ "_id": aluno["_id"] })
 
-    collection.delete_one({ "_id": aluno["_id"] })
+def get_many(filter):
+    return db.get_many(filter)
+
+def get_one(filter):
+    return db.get_one(filter)
+
+def count(filter):
+    return db.count(filter)
